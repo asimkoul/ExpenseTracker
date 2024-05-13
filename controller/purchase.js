@@ -24,7 +24,7 @@ const purchasepremium =async (req, res) => {
         })
     } catch(err){
         console.log(err);
-        res.status(403).json({ message: 'Sometghing went wrong', error: err})
+        res.status(403).json({ message: 'Something went wrong', error: err})
     }
 }
 
@@ -46,7 +46,7 @@ const purchasepremium =async (req, res) => {
                 
     } catch (err) {
         console.log(err);
-        res.status(403).json({ errpr: err, message: 'Sometghing went wrong' })
+        res.status(403).json({ error: err, message: 'Something went wrong' })
 
     }
 }

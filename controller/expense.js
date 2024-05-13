@@ -33,7 +33,7 @@ const deleteexpense = (req, res) => {
     }
     Expense.destroy({where: { id: expenseid, userId: req.user.id }}).then((noofrows) => {
         if(noofrows === 0){
-            return res.status(404).json({success: false, message: 'Expense doenst belong to the user'})
+            return res.status(404).json({success: false, message: 'Expense doesnt belong to the user'})
         }
         return res.status(200).json({ success: true, message: "Deleted Successfuly"})
     }).catch(err => {
