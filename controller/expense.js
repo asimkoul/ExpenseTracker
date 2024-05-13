@@ -1,6 +1,6 @@
 
 const Expense = require('../models/expenses');
-
+const User=require('../models/users')
 const addexpense = (req, res) => {
     const { expenseamount, description, category } = req.body;
 
@@ -9,8 +9,15 @@ const addexpense = (req, res) => {
     }
     
     Expense.create({ expenseamount, description, category, userId: req.user.id}).then(expense => {
+        const totalExpense=Number(req.user.totalExpenses)+Number(expenseamount)
+        User.update({
+            totalExpenses:totalExpense
+        },{
+            where:{id:req.user.id}
+        })
         return res.status(201).json({expense, success: true } );
     }).catch(err => {
+        console.log(err)
         return res.status(500).json({success : false, error: err})
     })
 }
