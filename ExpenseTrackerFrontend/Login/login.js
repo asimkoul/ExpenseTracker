@@ -18,3 +18,6 @@ function login(e) {
         document.body.innerHTML += `<div style="color:red;">${err.message} <div>`;
     })
 }
+function forgotpassword() {
+    window.location.href = "../ForgotPassword/index.html"
+}
