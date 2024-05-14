@@ -27,8 +27,7 @@ const addexpense =async (req, res) => {
          }
     }
 const getexpenses = (req, res)=> {
-    
-    
+
     Expense.findAll({ where : { userId: req.user.id}}).then(expenses => {
         return res.status(200).json({expenses, success: true})
     })
