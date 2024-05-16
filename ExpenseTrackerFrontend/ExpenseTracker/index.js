@@ -136,9 +136,10 @@ document.getElementById('rzp-button1').onclick = async function (e) {
  });
 }
 function download(){
+    const token  = localStorage.getItem('token')
     axios.get('http://localhost:3000/user/download', { headers: {"Authorization" : token} })
     .then((response) => {
-        if(response.status === 201){
+        if(response.status === 200){
             //the bcakend is essentially sending a download link
             //  which if we open in browser, the file would download
             var a = document.createElement("a");
