@@ -1,5 +1,7 @@
 
 const express = require('express');
+const fs=require('fs')
+const path=require('path')
 var cors = require('cors')
 const sequelize = require('./util/database');
 const User = require('./models/users');
@@ -17,6 +19,10 @@ const resetPasswordRoutes = require('./routes/resetpassword')
 
 const app = express();
 const dotenv = require('dotenv');
+const helmet=require('helmet')
+const morgan=require('morgan')
+
+const accessLogStream=fs.createWriteStream(path.join(__dirname,'access.log'),{flags:'a'})
 
 // get config vars
 dotenv.config();
@@ -26,7 +32,8 @@ app.use(cors());
 
 // app.use(bodyParser.urlencoded());  ////this is for handling forms
 app.use(express.json());  //this is for handling jsons
-
+app.use(helmet())
+app.use(morgan('combined',{stream:accessLogStream}))
 app.use('/user', userRoutes)
 app.use('/expense', expenseRoutes)
 app.use('/purchase', purchaseRoutes)
@@ -46,7 +53,8 @@ Forgotpassword.belongsTo(User);
 
 sequelize.sync()
     .then(() => {
-        app.listen(3000);
+        console.log('server started')
+        app.listen(process.env.PORT);
     })
     .catch(err => {
         console.log(err);
