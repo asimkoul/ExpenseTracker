@@ -51,7 +51,7 @@ User.hasMany(Forgotpassword);
 Forgotpassword.belongsTo(User);
 
 
-sequelize.sync({force:true})
+sequelize.sync()
     .then(() => {
         console.log('server started')
         app.listen(process.env.PORT);
