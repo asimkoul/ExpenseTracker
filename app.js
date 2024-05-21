@@ -21,18 +21,25 @@ const resetPasswordRoutes = require('./routes/resetpassword')
 
 
 const app = express();
-const helmet=require('helmet')
-const morgan=require('morgan')
+// const helmet=require('helmet')
+// const morgan=require('morgan')
 
-const accessLogStream=fs.createWriteStream(path.join(__dirname,'access.log'),{flags:'a'})
+// const accessLogStream=fs.createWriteStream(path.join(__dirname,'access.log'),{flags:'a'})
 
 
 app.use(cors());
 
 // app.use(bodyParser.urlencoded());  ////this is for handling forms
 app.use(express.json());  //this is for handling jsons
-app.use(helmet())
-app.use(morgan('combined',{stream:accessLogStream}))
+// app.use(helmet({
+//     contentSecurityPolicy: {
+//         useDefaults: true,
+//         directives: {
+//             'script-src': ["'self'", 'https://cdnjs.cloudflare.com']
+//         }
+//     }
+// }));
+// app.use(morgan('combined',{stream:accessLogStream}))
 
 app.use('/user', userRoutes)
 app.use('/expense', expenseRoutes)
