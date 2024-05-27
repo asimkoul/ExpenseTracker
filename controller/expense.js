@@ -3,6 +3,8 @@ const Expense = require('../models/expenses');
 const User=require('../models/users')
 const sequelize=require('../util/database')
 const AWS=require('aws-sdk')
+const DownloadedFiles = require('../models/downloadedFiles');
+
 
 function uploadToS3(data,fileName){
     const BUCKET_NAME=process.env.BUCKET_NAME
@@ -42,10 +44,11 @@ const downloadexpense=async (req,res)=>{
         const userId=req.user.id
         const fileName=`Expenses${userId}/${new Date()}.txt`
         const fileUrl=await uploadToS3(stringifiedExpenses,fileName)
+        await DownloadedFiles.create({url:fileUrl , userId:req.user.id})
         console.log(fileUrl)
         res.status(200).json({fileUrl:fileUrl,success:true})
     
-    } catch (error) {
+    } catch (err) {
         console.log(err)
         res.status(500).json({fileUrl:'',success:false,err:err})
     }
@@ -73,15 +76,34 @@ const addexpense =async (req, res) => {
                 return res.status(500).json({success : false, error: error})
          }
     }
-const getexpenses = (req, res)=> {
+const getexpenses =async (req, res)=> {
+    const { pageSize=5  ,page=1 } = req.query ;  
+    try {
+        const expenses = await Expense.findAll({
+            where: { userId: req.user.id },
+            limit:parseInt(pageSize),
+            offset: (page - 1) * parseInt(pageSize)
+        });
+        const totalItems = await Expense.count({ 
+            where : { userId:req.user.id }
+        })
+        console.log('Total Items:', totalItems);
+        console.log('Page Size:', pageSize);
+        console.log('Page:', page);
+        const totalPages = Math.ceil(totalItems / parseInt(pageSize));
+        console.log('Total Pages:', totalPages);
+           return res.status(200).json({
+            expenses,
+            currentPage: parseInt(page),
+            totalItems,
+            totalPages: totalPages
+        });
 
-    Expense.findAll({ where : { userId: req.user.id}}).then(expenses => {
-        return res.status(200).json({expenses, success: true})
-    })
-    .catch(err => {
+    } catch (err) {
         console.log(err)
         return res.status(500).json({ error: err, success: false})
-    })
+    }
+    
 }
 
 const deleteexpense = async (req, res) => {

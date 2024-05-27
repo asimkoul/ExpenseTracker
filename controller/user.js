@@ -1,6 +1,8 @@
 const User = require('../models/users');
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
+const DownloadedFiles = require('../models/downloadedFiles');
+
 
 function isstringinvalid(string){
     if(string == undefined ||string.length === 0){
@@ -61,9 +63,25 @@ const login = async (req, res) => {
     }
 }
 
+const downloadRecords = async (req,res ) => {
+    try{
+        const isPremiumUser = req.user.ispremiumuser;
+        if(isPremiumUser){
+            const downloadRecords = await DownloadedFiles.findAll({where: {userId:req.user.id}});
+            res.status(201).json(downloadRecords)
+        }else{
+            res.status(401).json({ success: false, message: "Unauthorized : you are not a premium user" });
+        }
+    }catch(err) {
+        console.error('Error fetching:', err);
+        res.status(500).json({ error: 'Failed to fetch' ,err:err});
+    };
+
+}
 module.exports = {
     signup,
     login,
-    generateAccessToken
+    generateAccessToken,
+    downloadRecords
 
 }

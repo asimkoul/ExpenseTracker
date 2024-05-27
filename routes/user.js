@@ -13,4 +13,7 @@ router.post('/login', userController.login)
 
 router.get('/download',userauthentication.authenticate,expenseController.downloadexpense)
 
+router.get('/downloadRecords' , userauthentication.authenticate , userController.downloadRecords);
+
+
 module.exports = router;

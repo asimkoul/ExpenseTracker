@@ -8,7 +8,7 @@ function login(e) {
 
     }
     console.log(loginDetails)
-    axios.post('http://3.6.37.33:4000/user/login',loginDetails).then(response => {
+    axios.post('http://localhost:4000/user/login',loginDetails).then(response => {
             alert(response.data.message)
             console.log(response.data)
             localStorage.setItem('token', response.data.token)

@@ -24,7 +24,21 @@
     <div id="message"></div>
     <button id="rzp-button1">Buy Premium</button>
     <button onclick="download()" id="downloadexpense">Download File</button>
+    <label for="pageSize">Page Size:</label>
+    <select id="pageSize" name="pageSize" onchange="updatePageSize()">
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="7">7</option>
+    </select>
+    <div id="recordsDiv" style="display: none;">
+        <h3>Previous downloads</h3>
+        <ul id="records"></ul>
+    </div>
+
+ 
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <div id="paginateExpense" ></div>
     <h1>
         Expenses
     </h1>
@@ -32,6 +46,8 @@
 
     </ul>
     <ul id="leaderboard"></ul>
+
+    
     <script src='./index.js'></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js" integrity="sha512-bZS47S7sPOxkjU/4Bt0zrhEtWx0y0CRkhEp8IckzK+ltifIIE9EMIMTuT/mEzoIMewUINruDBIR/jJnbguonqQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </body>

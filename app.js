@@ -11,6 +11,7 @@ const User = require('./models/users');
 const Expense = require('./models/expenses');
 const Order = require('./models/orders');
 const Forgotpassword = require('./models/forgotpassword');
+const DownloadedFiles = require('./models/downloadedFiles')
 
 
 const userRoutes = require('./routes/user')
@@ -47,8 +48,8 @@ app.use('/purchase', purchaseRoutes)
 app.use('/premium', premiumFeatureRoutes)
 app.use('/password', resetPasswordRoutes);
 app.use((req, res) => {
-    console.log('urlll', req.url);
-    console.log('Req is succesfful');
+    console.log('url', req.url);
+    console.log('Req is successfull');
     res.sendFile(path.join(__dirname, `public/${req.url}`));
 })
 
@@ -61,6 +62,10 @@ Order.belongsTo(User);
 
 User.hasMany(Forgotpassword);
 Forgotpassword.belongsTo(User);
+
+User.hasMany(DownloadedFiles);
+DownloadedFiles.belongsTo(User);
+
 
 
 sequelize.sync()

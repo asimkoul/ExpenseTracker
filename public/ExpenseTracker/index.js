@@ -9,7 +9,7 @@ function addNewExpense(e){
     }
     console.log(expenseDetails)
     const token  = localStorage.getItem('token')
-    axios.post('http://3.6.37.33:4000/expense/addexpense',expenseDetails,  { headers: {"Authorization" : token} })
+    axios.post('http://localhost:4000/expense/addexpense',expenseDetails,  { headers: {"Authorization" : token} })
         .then((response) => {
 
         addNewExpensetoUI(response.data.expense);
@@ -34,23 +34,9 @@ function parseJwt (token) {
 }
 
 window.addEventListener('DOMContentLoaded', ()=> {
-    const token  = localStorage.getItem('token')
-    const decodeToken = parseJwt(token)
-    console.log(decodeToken)
-    const ispremiumuser = decodeToken.ispremiumuser
-    if(ispremiumuser){
-        showPremiumuserMessage()
-        showLeaderboard()
-    }
-    axios.get('http://3.6.37.33:4000/expense/getexpenses', { headers: {"Authorization" : token} })
-    .then(response => {
-            response.data.expenses.forEach(expense => {
-
-                addNewExpensetoUI(expense);
-            })
-    }).catch(err => {
-        showError(err)
-    })
+    const savedPageSize = localStorage.getItem('pageSize') || 5;
+    document.getElementById('pageSize').value = savedPageSize;
+    fetchExpense(1)
 });
 
 function addNewExpensetoUI(expense){
@@ -67,7 +53,7 @@ function addNewExpensetoUI(expense){
 
 function deleteExpense(e, expenseid) {
     const token = localStorage.getItem('token')
-    axios.delete(`http://3.6.37.33:4000/expense/deleteexpense/${expenseid}`,  { headers: {"Authorization" : token} }).then(() => {
+    axios.delete(`http://localhost:4000/expense/deleteexpense/${expenseid}`,  { headers: {"Authorization" : token} }).then(() => {
 
             removeExpensefromUI(expenseid);
 
@@ -85,7 +71,7 @@ function showLeaderboard(){
     inputElement.value = 'Show Leaderboard'
     inputElement.onclick = async() => {
         const token = localStorage.getItem('token')
-        const userLeaderBoardArray = await axios.get('http://3.6.37.33:4000/premium/showLeaderBoard', { headers: {"Authorization" : token} })
+        const userLeaderBoardArray = await axios.get('http://localhost:4000/premium/showLeaderBoard', { headers: {"Authorization" : token} })
         console.log(userLeaderBoardArray)
 
         var leaderboardElem = document.getElementById('leaderboard')
@@ -105,7 +91,7 @@ function removeExpensefromUI(expenseid){
 
 document.getElementById('rzp-button1').onclick = async function (e) {
     const token = localStorage.getItem('token')
-    const response  = await axios.get('http://3.6.37.33:4000/purchase/premiummembership', { headers: {"Authorization" : token} });
+    const response  = await axios.get('http://localhost:4000/purchase/premiummembership', { headers: {"Authorization" : token} });
     console.log(response);
     var options =
     {
@@ -113,7 +99,7 @@ document.getElementById('rzp-button1').onclick = async function (e) {
      "order_id": response.data.order.id,// For one time payment
      // This handler function will handle the success payment
      "handler": async function (response) {
-        const res = await axios.post('http://3.6.37.33:4000/purchase/updatetransactionstatus',{
+        const res = await axios.post('http://localhost:4000/purchase/updatetransactionstatus',{
              order_id: options.order_id,
              payment_id: response.razorpay_payment_id,
          }, { headers: {"Authorization" : token} })
@@ -137,7 +123,7 @@ document.getElementById('rzp-button1').onclick = async function (e) {
 }
 function download(){
     const token  = localStorage.getItem('token')
-    axios.get('http://3.6.37.33:4000/user/download', { headers: {"Authorization" : token} })
+    axios.get('http://localhost:4000/user/download', { headers: {"Authorization" : token} })
     .then((response) => {
         if(response.status === 200){
             //the bcakend is essentially sending a download link
@@ -154,4 +140,76 @@ function download(){
     .catch((err) => {
         showError(err)
     });
+}
+function fetchExpense(page) {
+    const pageSize= localStorage.getItem('pageSize') || 5 ;
+    const token  = localStorage.getItem('token')
+    const decodeToken = parseJwt(token)
+    console.log(decodeToken)
+    const ispremiumuser = decodeToken.ispremiumuser
+    if(ispremiumuser){
+        showPremiumuserMessage()
+        showLeaderboard()
+        displayRecords()
+
+    }
+    axios.get(`http://localhost:4000/expense/getexpenses?page=${page}&pageSize=${pageSize}`, { headers: {"Authorization" : token} })
+    .then(response => {
+        const expenseList = document.getElementById('listOfExpenses');
+        expenseList.innerHTML = ''; // Clear existing list
+            response.data.expenses.forEach(expense => {
+                addNewExpensetoUI(expense);
+            })
+         
+    
+        const paginationDiv = document.getElementById('paginateExpense');
+        paginationDiv.innerHTML = ''; // Clear existing pagination
+
+        for (let i = 1; i <= response.data.totalPages; i++) {
+            const pageButton = document.createElement('button');
+            pageButton.textContent = i;
+            if (i === parseInt(page)) {
+                pageButton.disabled = true; // Disable current page button
+            }
+            pageButton.onclick = () => fetchExpense(i);
+            paginationDiv.appendChild(pageButton);
+        }
+    }).catch(err => {
+        showError(err)
+    })
+
+}
+function updatePageSize(){
+    const pageSize = document.getElementById('pageSize').value;
+    localStorage.setItem('pageSize' , pageSize)
+    fetchExpense(1)
+}
+
+async function displayRecords() {
+    try {
+        document.getElementById('recordsDiv').style.display = 'block';
+        const token = localStorage.getItem('token');
+        const record = await axios.get('http://localhost:4000/user/downloadRecords', {
+            headers: { 'Authorization': token }
+        });
+       
+        document.getElementById('records').innerHTML = '';
+
+        record.data.forEach(records => {
+            const ul=document.getElementById('records')
+            const li = document.createElement('li');
+            li.textContent = `${records.downloadedAt} -` ;
+
+            const dlink = document.createElement('a');
+            dlink.href = records.url;
+            dlink.textContent = 'Download';
+            dlink.download = 'myexpense.csv';
+
+            li.appendChild(dlink);
+            ul.appendChild(li);
+        });
+    } catch (error) {
+        console.error(error);
+        alert(error);
+    }
 }
