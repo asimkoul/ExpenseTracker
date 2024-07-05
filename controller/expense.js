@@ -1,9 +1,8 @@
 
 const Expense = require('../models/expenses');
 const User=require('../models/users')
-const sequelize=require('../util/database')
 const AWS=require('aws-sdk')
-const DownloadedFiles = require('../models/downloadedFiles');
+const Report  = require('../models/downloadedFiles');
 
 
 function uploadToS3(data,fileName){
@@ -37,65 +36,65 @@ function uploadToS3(data,fileName){
 
 const downloadexpense=async (req,res)=>{
     try {
-        const expenses=await req.user.getExpenses();
+        const expenses = await req.user.populate({
+            path: 'expenses',
+            select: 'expense description category updatedAt -_id'
+        });
+      
         console.log(expenses)
-        const stringifiedExpenses= JSON.stringify(expenses)
+        const stringifiedExpenses = JSON.stringify(expenses.expenses);
     
-        const userId=req.user.id
+        const userId=req.user._id
         const fileName=`Expenses${userId}/${new Date()}.txt`
         const fileUrl=await uploadToS3(stringifiedExpenses,fileName)
-        await DownloadedFiles.create({url:fileUrl , userId:req.user.id})
-        console.log(fileUrl)
-        res.status(200).json({fileUrl:fileUrl,success:true})
-    
+        const report = await Report.create({ url: fileUrl, userId: req.user._id });
+        await req.user.updateOne({$push: {expenseReport:report._id}});
+        res.status(200).json({ fileUrl });
+        
     } catch (err) {
         console.log(err)
         res.status(500).json({fileUrl:'',success:false,err:err})
     }
 }
 const addexpense =async (req, res) => {
-    const t=await sequelize.transaction()
     try {
-        const { expenseamount, description, category } = req.body;
-
-        if(expenseamount == undefined || expenseamount.length === 0 ){
+        const { expense, description, category } = req.body;
+        const _id = req.user._id;
+        if(expense == undefined || expense.length === 0 ){
             return res.status(400).json({success: false, message: 'Parameters missing'})
         }
-       const expense=await Expense.create({ expenseamount, description, category, userId: req.user.id},{transaction:t})
-            const totalExpense=Number(req.user.totalExpenses)+Number(expenseamount)
-             await User.update({
-                totalExpenses:totalExpense
-            },{
-                where:{id:req.user.id},
-                transaction:t
-            })
-            await t.commit()
-            res.status(200).json({expense:expense})
+       const result=await Expense.create({ expense, description, category})
+       await User.updateOne(
+        { _id: _id },
+        {
+          $inc: {
+            totalExpense: expense,
+          },
+          $push: {
+            expenses: result._id,
+          },
+        }
+      );
+              res.status(200).json({expense:result})
         } catch (error) {
-                await t.rollback()
+                console.log(error);
                 return res.status(500).json({success : false, error: error})
          }
     }
 const getexpenses =async (req, res)=> {
     const { pageSize=5  ,page=1 } = req.query ;  
+    const limit=parseInt(pageSize);
+    const offset= (page - 1) * parseInt(pageSize)
     try {
-        const expenses = await Expense.findAll({
-            where: { userId: req.user.id },
-            limit:parseInt(pageSize),
-            offset: (page - 1) * parseInt(pageSize)
-        });
-        const totalItems = await Expense.count({ 
-            where : { userId:req.user.id }
-        })
-        console.log('Total Items:', totalItems);
-        console.log('Page Size:', pageSize);
-        console.log('Page:', page);
-        const totalPages = Math.ceil(totalItems / parseInt(pageSize));
-        console.log('Total Pages:', totalPages);
+        const p1 = await req.user.populate("expenses");
+        const totalExpenses = p1.expenses;
+        const expenses = await Expense.find({ _id: { $in: totalExpenses } })
+          .skip(offset)
+          .limit(limit);
+        const totalPages = Math.ceil(totalExpenses.length / parseInt(pageSize));
            return res.status(200).json({
             expenses,
             currentPage: parseInt(page),
-            totalItems,
             totalPages: totalPages
         });
 
@@ -107,28 +106,28 @@ const getexpenses =async (req, res)=> {
 }
 
 const deleteexpense = async (req, res) => {
-    const t = await sequelize.transaction();
     try {
-        const expenseid = req.params.expenseid;
-        const expense = await Expense.findOne({ where: { id: expenseid, userId: req.user.id } });
-        
+        const _id = req.params._id;
+        const userId = req.user._id;
+        const expense = await Expense.findOne({ _id: _id });       
         if (!expense) {
             return res.status(400).json({ success: false, message: "Expense not found" });
         }
-        
-        const deleted = await Expense.destroy({ where: { id: expenseid, userId: req.user.id }, transaction: t });
-        const totalExpense = Number(req.user.totalExpenses) - Number(expense.expenseamount);
-        await User.update({
-            totalExpenses: totalExpense
-        },{
-            where: { id: req.user.id },
-            transaction: t
-        });
-        
-        await t.commit();
-        res.status(200).json({ success: true, expense: deleted });
+        const expenseAmount = expense.expense;
+        await User.updateOne(
+            { _id: userId },
+            {
+              $inc: {
+                totalExpense: -expenseAmount  ,
+              },
+              $pull: {
+                expenses: _id,
+              },
+            }
+          );
+          await expense.deleteOne();
+        res.status(200).json({ success: true});
     } catch (error) {
-        await t.rollback();
         console.log(error);
         return res.status(500).json({ success: false, message: "Failed" });
     }

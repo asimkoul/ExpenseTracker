@@ -1,16 +1,17 @@
-const Sequelize = require('sequelize')
-const sequelize = require('../util/database');
+const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
 
-const DownloadedFiles = sequelize.define('DownloadedFiles' , {
+const DownloadedFiles = new Schema({
     url: {
-        type:Sequelize.STRING,
-        allowNull:false
+        type: String,
+        required: true
     },
-    downloadedAt: {
-        type:Sequelize.DATE,
-        allowNull:false,
-        defaultValue:Sequelize.NOW
+    updatedAt: {
+        type: Date,
+        default: Date.now
     }
-});
+})
 
-module.exports=DownloadedFiles;
+
+
+module.exports = mongoose.model("Report", DownloadedFiles);

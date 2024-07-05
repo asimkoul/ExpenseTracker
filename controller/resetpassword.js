@@ -3,19 +3,16 @@ const sgMail = require('@sendgrid/mail');
 const bcrypt = require('bcrypt');
 
 const User = require('../models/users');
-const Forgotpassword = require('../models/forgotpassword');
+const ForgotPasswordRequests  = require('../models/forgotpassword');
 
 const forgotpassword = async (req, res) => {
     try {
         const { email } =  req.body;
-        const user = await User.findOne({where : { email }});
+        const user = await User.findOne({ email: email  });
         if(user){
-            const id = uuid.v4();
-            user.createForgotpassword({ id , active: true })
-                .catch(err => {
-                    throw new Error(err)
-                })
-
+            const forgetPasswordId = uuid.v4();
+            const forgetPassword = await ForgotPasswordRequests.create({ forgetPasswordId: forgetPasswordId, userId: user._id });
+            await user.updateOne({$push: {forgetPasswordRequest: forgetPassword._id}});
             sgMail.setApiKey(process.env.SENGRID_API_KEY)
 
             const msg = {
@@ -23,7 +20,7 @@ const forgotpassword = async (req, res) => {
                 from: 'ahmadasim080@gmail.com', // Change to your verified sender
                 subject: 'Sending with SendGrid is Fun',
                 text: 'and easy to do anywhere, even with Node.js',
-                html: `<a href="http://localhost:3000/password/resetpassword/${id}">Reset password</a>`,
+                html: `<a href="http://localhost:3000/password/resetpassword/${forgetPasswordId}">Reset password</a>`,
             }
 
             sgMail

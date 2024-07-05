@@ -5,8 +5,7 @@
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node app.js",
-    "start-server": "nodemon app.js"
+    "start": "nodemon app.js"
   },
   "author": "",
   "license": "ISC",
@@ -19,6 +18,8 @@
     "express": "^4.19.2",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.8.0",
+    "mongoose": "^8.4.4",
     "morgan": "^1.10.0",
     "mysql2": "^3.9.7",
     "nodemon": "^3.1.0",

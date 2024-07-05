@@ -8,7 +8,7 @@ function forgotpassword(e) {
 
     }
     console.log(userDetails)
-    axios.post('http://3.6.37.33:4000/password/forgotpassword',userDetails).then(response => {
+    axios.post('http://localhost:3000/password/forgotpassword',userDetails).then(response => {
         if(response.status === 202){
             document.body.innerHTML += '<div style="color:red;">Mail Successfuly sent <div>'
         } else {

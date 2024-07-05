@@ -5,12 +5,10 @@ const e = require('express');
 
 const getUserLeaderBoard = async (req, res) => {
     try{
-        const leaderboardofusers = await User.findAll({
-            order:[['totalExpenses', 'DESC']]
-        })
-       
-        res.status(200).json(leaderboardofusers)
-    
+        const leaderboard = await User.find({ totalExpense: { $gt: 0 } }, 'name totalExpense')
+        .sort({ totalExpense: -1 })
+        .limit(10);
+        res.status(200).json(leaderboard);
 } catch (err){
     console.log(err)
     res.status(500).json(err)
